@@ -1,11 +1,12 @@
 <?php
 /**
- * Companies + email settings stub.
+ * Companies + email settings.
  *
  * @var array  $companies
  * @var string $support_email
  * @var string $sender_name
  * @var string $sender_email
+ * @var string $comgate_cb
  */
 
 if (!defined('ABSPATH')) {
@@ -16,7 +17,16 @@ settings_errors('lkba_payments');
 ?>
 <div class="wrap">
     <h1><?php echo esc_html__('LKBA Platby', 'lkba-payments'); ?></h1>
-    <p><?php echo esc_html__('Phase 0 — company credentials stub. Gateways are not live yet.', 'lkba-payments'); ?></p>
+    <p><?php echo esc_html__('Phase 1 — multi-company Comgate + Fakturoid. Card invoices are created only after Comgate paid.', 'lkba-payments'); ?></p>
+
+    <p>
+        <strong><?php echo esc_html__('Comgate callback (REST, shared):', 'lkba-payments'); ?></strong>
+        <code><?php echo esc_html($comgate_cb); ?></code>
+    </p>
+    <p>
+        <strong><?php echo esc_html__('Comgate legacy callback:', 'lkba-payments'); ?></strong>
+        <code><?php echo esc_html(LKBA_Payments_Comgate::get_legacy_callback_url()); ?></code>
+    </p>
 
     <form method="post" action="">
         <?php wp_nonce_field('lkba_payments_save_settings', 'lkba_payments_settings_nonce'); ?>
@@ -27,7 +37,6 @@ settings_errors('lkba_payments');
                 <th scope="row"><label for="lkba_support_email"><?php echo esc_html__('Support e-mail', 'lkba-payments'); ?></label></th>
                 <td>
                     <input type="email" class="regular-text" id="lkba_support_email" name="lkba_support_email" value="<?php echo esc_attr($support_email); ?>" placeholder="<?php echo esc_attr__('TBD — fill when address is known', 'lkba-payments'); ?>">
-                    <p class="description"><?php echo esc_html__('Used for cancel/reschedule mailto and From headers once set.', 'lkba-payments'); ?></p>
                 </td>
             </tr>
             <tr>
@@ -114,9 +123,9 @@ settings_errors('lkba_payments');
                         <input type="text" class="regular-text" name="<?php echo esc_attr($prefix); ?>[fakturoid_client_secret]" value="<?php echo esc_attr($company['fakturoid_client_secret'] ?? ''); ?>" placeholder="Client secret"><br>
                         <input type="text" class="regular-text" name="<?php echo esc_attr($prefix); ?>[fakturoid_user_agent]" value="<?php echo esc_attr($company['fakturoid_user_agent'] ?? ''); ?>" placeholder="User-Agent"><br>
                         <input type="number" class="small-text" name="<?php echo esc_attr($prefix); ?>[fakturoid_vat_rate]" value="<?php echo esc_attr((string) ($company['fakturoid_vat_rate'] ?? 0)); ?>" min="0" max="100"> % VAT<br>
-                        <input type="text" class="regular-text" name="<?php echo esc_attr($prefix); ?>[fakturoid_webhook_auth]" value="<?php echo esc_attr($company['fakturoid_webhook_auth'] ?? ''); ?>" placeholder="Webhook Authorization"><br>
+                        <input type="text" class="regular-text" name="<?php echo esc_attr($prefix); ?>[fakturoid_webhook_auth]" value="<?php echo esc_attr($company['fakturoid_webhook_auth'] ?? ''); ?>" placeholder="Webhook Authorization (auto-filled when empty + enabled)"><br>
                         <p class="description">
-                            <?php echo esc_html__('Webhook URL (Phase 1):', 'lkba-payments'); ?>
+                            <?php echo esc_html__('Webhook URL (invoice_paid only):', 'lkba-payments'); ?>
                             <code><?php echo esc_html(LKBA_Payments_Fakturoid::get_webhook_url($id)); ?></code>
                         </p>
                     </td>
@@ -125,5 +134,16 @@ settings_errors('lkba_payments');
         <?php endforeach; ?>
 
         <?php submit_button(__('Uložit', 'lkba-payments')); ?>
+    </form>
+
+    <hr>
+    <h2><?php echo esc_html__('Test Fakturoid připojení', 'lkba-payments'); ?></h2>
+    <form method="post" action="" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <?php wp_nonce_field('lkba_payments_test_fakturoid', 'lkba_payments_test_nonce'); ?>
+        <?php foreach ($companies as $company) : ?>
+            <button type="submit" class="button" name="lkba_payments_test_fakturoid" value="<?php echo esc_attr($company['id']); ?>">
+                <?php echo esc_html(sprintf(__('Test %s', 'lkba-payments'), $company['id'])); ?>
+            </button>
+        <?php endforeach; ?>
     </form>
 </div>

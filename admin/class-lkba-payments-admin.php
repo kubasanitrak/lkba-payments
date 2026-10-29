@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin menu and companies settings stub.
+ * Admin: companies CRUD, logs, Fakturoid connectivity test.
  */
 
 if (!defined('ABSPATH')) {
@@ -14,6 +14,7 @@ class LKBA_Payments_Admin {
     public function __construct() {
         add_action('admin_menu', array($this, 'register_menu'));
         add_action('admin_init', array($this, 'handle_save'));
+        add_action('admin_init', array($this, 'handle_connectivity_test'));
     }
 
     public function register_menu() {
@@ -25,6 +26,47 @@ class LKBA_Payments_Admin {
             array($this, 'render_settings_page'),
             'dashicons-money-alt',
             58
+        );
+
+        add_submenu_page(
+            self::MENU_SLUG,
+            __('Firmy', 'lkba-payments'),
+            __('Firmy', 'lkba-payments'),
+            'manage_options',
+            self::MENU_SLUG,
+            array($this, 'render_settings_page')
+        );
+
+        add_submenu_page(
+            self::MENU_SLUG,
+            __('Logy plateb', 'lkba-payments'),
+            __('Logy', 'lkba-payments'),
+            'manage_options',
+            'lkba-payments-logs',
+            array($this, 'render_logs_page')
+        );
+    }
+
+    public function handle_connectivity_test() {
+        if (!isset($_POST['lkba_payments_test_fakturoid'])) {
+            return;
+        }
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['lkba_payments_test_nonce'] ?? '')), 'lkba_payments_test_fakturoid')) {
+            return;
+        }
+
+        $company_id = sanitize_text_field(wp_unslash($_POST['lkba_payments_test_fakturoid']));
+        $client     = LKBA_Payments_Fakturoid::for_company($company_id);
+        $result     = $client->run_connectivity_test();
+
+        add_settings_error(
+            'lkba_payments',
+            'lkba_fakturoid_test',
+            sprintf('%s: %s', $company_id, $result['message']),
+            $result['ok'] ? 'updated' : 'error'
         );
     }
 
@@ -45,13 +87,16 @@ class LKBA_Payments_Admin {
 
         $companies = array();
         $defaults  = LKBA_Payments_Settings::default_companies();
+        $existing  = LKBA_Payments_Settings::get_companies();
 
         foreach ($defaults as $index => $default) {
-            $row = isset($posted[$index]) && is_array($posted[$index]) ? $posted[$index] : array();
-            $company = $default;
+            $row     = isset($posted[$index]) && is_array($posted[$index]) ? $posted[$index] : array();
+            $prev    = isset($existing[$index]) && is_array($existing[$index]) ? $existing[$index] : $default;
+            $company = array_merge($default, $prev);
 
-            $company['label'] = isset($row['label']) ? sanitize_text_field($row['label']) : $default['label'];
-            $company['name']  = isset($row['name']) ? sanitize_text_field($row['name']) : '';
+            $company['id']     = $default['id'];
+            $company['label']  = isset($row['label']) ? sanitize_text_field($row['label']) : $default['label'];
+            $company['name']   = isset($row['name']) ? sanitize_text_field($row['name']) : '';
             $company['street'] = isset($row['street']) ? sanitize_text_field($row['street']) : '';
             $company['city']   = isset($row['city']) ? sanitize_text_field($row['city']) : '';
             $company['zip']    = isset($row['zip']) ? sanitize_text_field($row['zip']) : '';
@@ -82,6 +127,10 @@ class LKBA_Payments_Admin {
             $company['fakturoid_vat_rate']      = isset($row['fakturoid_vat_rate']) ? (int) $row['fakturoid_vat_rate'] : 0;
             $company['fakturoid_webhook_auth']  = isset($row['fakturoid_webhook_auth']) ? sanitize_text_field($row['fakturoid_webhook_auth']) : '';
 
+            if ($company['fakturoid_webhook_auth'] === '' && !empty($company['fakturoid_enabled'])) {
+                $company['fakturoid_webhook_auth'] = wp_generate_password(32, false, false);
+            }
+
             $companies[] = $company;
         }
 
@@ -103,7 +152,7 @@ class LKBA_Payments_Admin {
         add_settings_error(
             'lkba_payments',
             'lkba_payments_saved',
-            __('Nastavení uloženo (Phase 0 stub).', 'lkba-payments'),
+            __('Nastavení uloženo.', 'lkba-payments'),
             'updated'
         );
     }
@@ -117,7 +166,17 @@ class LKBA_Payments_Admin {
         $support_email = get_option(LKBA_Payments_Settings::OPTION_SUPPORT_EMAIL, '');
         $sender_name   = get_option(LKBA_Payments_Settings::OPTION_SENDER_NAME, '');
         $sender_email  = get_option(LKBA_Payments_Settings::OPTION_SENDER_EMAIL, '');
+        $comgate_cb    = LKBA_Payments_Comgate::get_callback_url();
 
         include LKBA_PAYMENTS_PLUGIN_DIR . 'admin/partials/settings-page.php';
+    }
+
+    public function render_logs_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $logs = LKBA_Payments_Logger::get_logs(150);
+        include LKBA_PAYMENTS_PLUGIN_DIR . 'admin/partials/logs-page.php';
     }
 }

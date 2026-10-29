@@ -1,6 +1,6 @@
 <?php
 /**
- * Payment log writer.
+ * Payment log writer + reader.
  */
 
 if (!defined('ABSPATH')) {
@@ -33,5 +33,38 @@ class LKBA_Payments_Logger {
             ),
             array('%s', '%s', '%s', '%s', '%s')
         );
+    }
+
+    /**
+     * @param int         $limit
+     * @param string|null $company_id
+     * @param string|null $type
+     * @return array<int, object>
+     */
+    public static function get_logs($limit = 100, $company_id = null, $type = null) {
+        global $wpdb;
+
+        if (!LKBA_Payments_DB::table_exists('lkba_payment_logs')) {
+            return array();
+        }
+
+        $table = $wpdb->prefix . 'lkba_payment_logs';
+        $where = array('1=1');
+        $args  = array();
+
+        if ($company_id) {
+            $where[] = 'company_id = %s';
+            $args[]  = $company_id;
+        }
+        if ($type) {
+            $where[] = 'type = %s';
+            $args[]  = sanitize_key($type);
+        }
+
+        $sql = "SELECT * FROM $table WHERE " . implode(' AND ', $where) . ' ORDER BY id DESC LIMIT %d';
+        $args[] = max(1, (int) $limit);
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        return $wpdb->get_results($wpdb->prepare($sql, $args));
     }
 }
