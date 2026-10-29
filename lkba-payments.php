@@ -3,7 +3,7 @@
  * Plugin Name: LKBA Payments
  * Plugin URI: https://github.com/kubasanitrak/lkba-payments
  * Description: Shared multi-company Comgate, Fakturoid, bank transfer and payment helpers for LKBA Events and Vouchers.
- * Version: 0.2.0
+ * Version: 0.2.1
  * Author: kubasanitrak
  * Author URI: https://github.com/kubasanitrak
  * License: GPL-2.0+
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('LKBA_PAYMENTS_VERSION', '0.2.0');
+define('LKBA_PAYMENTS_VERSION', '0.2.1');
 define('LKBA_PAYMENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('LKBA_PAYMENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('LKBA_PAYMENTS_PLUGIN_BASENAME', plugin_basename(__FILE__));

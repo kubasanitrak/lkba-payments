@@ -81,7 +81,7 @@ class LKBA_Payments_Emails {
      */
     public static function send($to, $subject, $title, $inner_html, array $attachments = array()) {
         $from_name  = get_option(LKBA_Payments_Settings::OPTION_SENDER_NAME, get_bloginfo('name'));
-        $from_email = get_option(LKBA_Payments_Settings::OPTION_SENDER_EMAIL, get_option('admin_email'));
+        $from_email = LKBA_Payments_Settings::get_sender_email();
 
         $headers = array('Content-Type: text/html; charset=UTF-8');
         if ($from_email) {

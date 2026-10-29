@@ -36,7 +36,8 @@ settings_errors('lkba_payments');
             <tr>
                 <th scope="row"><label for="lkba_support_email"><?php echo esc_html__('Support e-mail', 'lkba-payments'); ?></label></th>
                 <td>
-                    <input type="email" class="regular-text" id="lkba_support_email" name="lkba_support_email" value="<?php echo esc_attr($support_email); ?>" placeholder="<?php echo esc_attr__('TBD — fill when address is known', 'lkba-payments'); ?>">
+                    <input type="email" class="regular-text" id="lkba_support_email" name="lkba_support_email" value="<?php echo esc_attr($support_email); ?>">
+                    <p class="description"><?php echo esc_html__('Default: rezervace@barreacademy.cz', 'lkba-payments'); ?></p>
                 </td>
             </tr>
             <tr>

@@ -163,9 +163,9 @@ class LKBA_Payments_Admin {
         }
 
         $companies     = LKBA_Payments_Settings::get_companies();
-        $support_email = get_option(LKBA_Payments_Settings::OPTION_SUPPORT_EMAIL, '');
+        $support_email = LKBA_Payments_Settings::get_support_email();
         $sender_name   = get_option(LKBA_Payments_Settings::OPTION_SENDER_NAME, '');
-        $sender_email  = get_option(LKBA_Payments_Settings::OPTION_SENDER_EMAIL, '');
+        $sender_email  = LKBA_Payments_Settings::get_sender_email();
         $comgate_cb    = LKBA_Payments_Comgate::get_callback_url();
 
         include LKBA_PAYMENTS_PLUGIN_DIR . 'admin/partials/settings-page.php';

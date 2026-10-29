@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] — 2026-10-29
+
+### Changed
+
+- Default support / sender e-mail: `rezervace@barreacademy.cz`.
+
 ## [0.2.0] — 2026-10-29
 
 ### Added

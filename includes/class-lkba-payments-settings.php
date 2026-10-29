@@ -9,6 +9,8 @@ if (!defined('ABSPATH')) {
 
 class LKBA_Payments_Settings {
 
+    const DEFAULT_SUPPORT_EMAIL = 'rezervace@barreacademy.cz';
+
     const OPTION_COMPANIES = 'lkba_payments_companies';
     const OPTION_SUPPORT_EMAIL = 'lkba_payments_support_email';
     const OPTION_SENDER_NAME = 'lkba_payments_email_sender_name';
@@ -24,9 +26,9 @@ class LKBA_Payments_Settings {
         }
 
         $defaults = array(
-            self::OPTION_SUPPORT_EMAIL => '',
+            self::OPTION_SUPPORT_EMAIL => self::DEFAULT_SUPPORT_EMAIL,
             self::OPTION_SENDER_NAME   => 'Lenka Krejčová Barre Academy',
-            self::OPTION_SENDER_EMAIL  => '',
+            self::OPTION_SENDER_EMAIL  => self::DEFAULT_SUPPORT_EMAIL,
         );
 
         foreach ($defaults as $key => $value) {
@@ -34,6 +36,29 @@ class LKBA_Payments_Settings {
                 add_option($key, $value);
             }
         }
+
+        if ((string) get_option(self::OPTION_SUPPORT_EMAIL, '') === '') {
+            update_option(self::OPTION_SUPPORT_EMAIL, self::DEFAULT_SUPPORT_EMAIL);
+        }
+        if ((string) get_option(self::OPTION_SENDER_EMAIL, '') === '') {
+            update_option(self::OPTION_SENDER_EMAIL, self::DEFAULT_SUPPORT_EMAIL);
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public static function get_support_email() {
+        $email = (string) get_option(self::OPTION_SUPPORT_EMAIL, self::DEFAULT_SUPPORT_EMAIL);
+        return $email !== '' ? $email : self::DEFAULT_SUPPORT_EMAIL;
+    }
+
+    /**
+     * @return string
+     */
+    public static function get_sender_email() {
+        $email = (string) get_option(self::OPTION_SENDER_EMAIL, self::DEFAULT_SUPPORT_EMAIL);
+        return $email !== '' ? $email : self::DEFAULT_SUPPORT_EMAIL;
     }
 
     /**
