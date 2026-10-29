@@ -1,0 +1,7 @@
+{
+    "name": "kubasanitrak/lkba-payments",
+    "description": "Shared payments core for LKBA Events and Vouchers",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {}
+}

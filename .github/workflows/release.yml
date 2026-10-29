@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Extract plugin version
+        id: version
+        run: |
+          VERSION=$(grep -m1 '^[[:space:]]*\*[[:space:]]*Version:' lkba-payments.php | sed -E 's/.*Version:[[:space:]]*//')
+          echo "plugin_version=${VERSION}" >> "$GITHUB_OUTPUT"
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "Plugin header version (${VERSION}) does not match tag (${TAG})."
+            exit 1
+          fi
+
+      - name: Install Composer dependencies
+        run: |
+          if [ -f composer.lock ] || [ -f composer.json ]; then
+            composer install --no-dev --optimize-autoloader --no-interaction
+          fi
+
+      - name: Build release zip
+        run: |
+          BUILD_DIR="${RUNNER_TEMP}/build"
+          PLUGIN_DIR="${BUILD_DIR}/lkba-payments"
+          mkdir -p "$PLUGIN_DIR"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.cursor' \
+            --exclude='.DS_Store' \
+            --exclude='_TODO' \
+            ./ "$PLUGIN_DIR/"
+          cd "$BUILD_DIR"
+          zip -r lkba-payments.zip lkba-payments
+
+      - name: Extract changelog for release
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.plugin_version }}"
+          BODY_FILE="${RUNNER_TEMP}/release-notes.md"
+          if [ -f CHANGELOG.md ]; then
+            awk -v ver="$VERSION" '
+              BEGIN { found=0 }
+              $0 ~ "^## \\[" ver "\\]" { found=1; next }
+              found && /^## \[/ { exit }
+              found { print }
+            ' CHANGELOG.md > "$BODY_FILE"
+          fi
+          if [ ! -s "$BODY_FILE" ]; then
+            echo "Release ${VERSION}" > "$BODY_FILE"
+          fi
+          echo "body_path=${BODY_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: ${{ steps.changelog.outputs.body_path }}
+          files: ${{ runner.temp }}/build/lkba-payments.zip
+          generate_release_notes: false
